@@ -1,5 +1,7 @@
 if(ESP_PLATFORM EQUAL 1)
     set(SRC_FILES
+        "src/color.cpp"
+        "src/pixels.cpp"
         "src/light-effects.cpp"
     )
 

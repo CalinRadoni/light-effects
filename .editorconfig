@@ -14,7 +14,7 @@ insert_final_newline = true
 [{*.md,*.rst}]
 trim_trailing_whitespace = false
 
-[{Makefile,*.mk,*.bat}]
+[{Makefile,Makefile*,*.mk,*.bat}]
 indent_style = tab
 indent_size = 2
 

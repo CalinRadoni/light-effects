@@ -8,6 +8,6 @@
 # ignore auxiliary files
 /.vscode/.browse.VC.db
 
-# ignore auxiliary directories
+# ignore auxiliary directories and files
 /notes/
 build/
