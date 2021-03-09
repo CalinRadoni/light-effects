@@ -17,65 +17,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef color_H
-#define color_H
+#ifndef color_hsv_H
+#define color_hsv_H
 
 #include <stddef.h>
 #include <stdint.h>
 
 class ColorWRGB;
-class ColorHSV;
-
-class ColorWRGB
-{
-public:
-    uint8_t w = 0;
-    uint8_t r = 0;
-    uint8_t g = 0;
-    uint8_t b = 0;
-
-    // constructors
-
-    ColorWRGB(void) {}
-
-    ColorWRGB(uint8_t iw, uint8_t ir, uint8_t ig, uint8_t ib) : w(iw), r(ir), g(ig), b(ib) {}
-
-    ColorWRGB(uint8_t ir, uint8_t ig, uint8_t ib) : r(ir), g(ig), b(ib) {}
-
-    ColorWRGB(uint32_t val);
-
-    ColorWRGB(uint8_t *val);
-
-    ColorWRGB(ColorHSV&);
-
-    // functions to set the values
-
-    void Set(uint8_t iw, uint8_t ir, uint8_t ig, uint8_t ib) {
-        w = iw; r = ir; g = ig; b = ib;
-    }
-
-    void Set(uint8_t ir, uint8_t ig, uint8_t ib) {
-        w = 0; r = ir; g = ig; b = ib;
-    }
-
-    void Set(uint32_t val);
-
-    void Set(uint8_t *val);
-
-    void Set(ColorHSV&);
-
-    // gamma
-
-    void BuildGammaTable(float gamma);
-
-    uint8_t* GetGammaTable(void);
-
-    void ApplyGamma(void);
-
-    // functions to output values
-
-    void ToBytePtr(uint8_t *val);
-};
 
 class ColorHSV
 {

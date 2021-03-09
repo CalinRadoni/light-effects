@@ -2,20 +2,21 @@
 #include <string>
 #include <fstream>
 
-#include "../src/color.h"
+#include "../src/color-wrgb.h"
+#include "../src/color-hsv.h"
+#include "../src/color-gamma.h"
 
 int main()
 {
-
-    ColorHSV color;
     ColorWRGB rgb;
+    ColorHSV color;
+    Gamma gamma;
     uint16_t hue;
     uint8_t i;
 
     std::string ccc[13];
 
-    rgb.BuildGammaTable(2);
-    uint8_t *gammaTable = rgb.GetGammaTable();
+    uint8_t *gammaTable = gamma.GetTable();
 
     ccc[12] = "gg = [ ";
     i = 0;
@@ -53,7 +54,7 @@ int main()
         ccc[1] += std::to_string(rgb.g);
         ccc[2] += std::to_string(rgb.b);
 
-        rgb.ApplyGamma();
+        gamma.Apply(rgb);
         ccc[3] += std::to_string(rgb.r);
         ccc[4] += std::to_string(rgb.g);
         ccc[5] += std::to_string(rgb.b);
@@ -64,7 +65,7 @@ int main()
         ccc[7] += std::to_string(rgb.g);
         ccc[8] += std::to_string(rgb.b);
 
-        rgb.ApplyGamma();
+        gamma.Apply(rgb);
         ccc[9] += std::to_string(rgb.r);
         ccc[10] += std::to_string(rgb.g);
         ccc[11] += std::to_string(rgb.b);

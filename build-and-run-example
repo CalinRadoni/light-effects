@@ -2,14 +2,27 @@
 
 set -e
 
+# remove generated files
 rm -f example/*.png
+rm -f example/hsvRainbow.py
+
+# create and run the example application
 make
 cd example
 ./app
+
+# check if "hsvRainbow.py" was generated
+if [[ ! -f hsvRainbow.py ]]; then
+    exit 1
+fi
+
+# run the python script to generate the images
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install Pillow
 python3 ./buildImages.py
 deactivate
+
+# clean up
 cd ..
 make clean
