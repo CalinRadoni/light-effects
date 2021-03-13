@@ -47,6 +47,20 @@ public:
 
     ColorWRGB(ColorHSV&);
 
+    // operators
+
+    ColorWRGB& operator=(const ColorWRGB &rhs) {
+        w = rhs.w; r = rhs.r; g = rhs.g; b = rhs.b;
+        return *this;
+    }
+
+    bool operator==(const ColorWRGB &rgb) {
+        return ((w == rgb.w) && (r == rgb.r) && (g == rgb.g) && (b == rgb.b));
+    }
+    bool operator!=(const ColorWRGB &rgb) {
+        return ((w != rgb.w) || (r != rgb.r) || (g != rgb.g) || (b != rgb.b));
+    }
+
     // functions to set the values
 
     void Set(uint8_t iw, uint8_t ir, uint8_t ig, uint8_t ib) {
