@@ -60,7 +60,7 @@ int main()
         ccc[5] += std::to_string(rgb.b);
 
         color.h = hue;
-        color.ToRGB_raw_cl(rgb);
+        color.ToRGB_raw_ce(rgb);
         ccc[6] += std::to_string(rgb.r);
         ccc[7] += std::to_string(rgb.g);
         ccc[8] += std::to_string(rgb.b);

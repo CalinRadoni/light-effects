@@ -71,7 +71,7 @@ void ColorHSV::ToRGB_raw(ColorWRGB &rgb)
     ApplySV(r, g, b, rgb);
 }
 
-void ColorHSV::ToRGB_raw_cl(ColorWRGB &rgb)
+void ColorHSV::ToRGB_raw_ce(ColorWRGB &rgb)
 {
     uint8_t r, g, b;
     uint16_t hue = h;
