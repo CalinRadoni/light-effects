@@ -24,9 +24,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdint.h>
 
 /**
- * @brief Pixels is a simple memory manager for lights
+ * @brief Pixels keep the info about a memory buffer formatted for LightEffects.
  *
- * Each pixel is 4 bytes, one for each of WRGB colors.
+ * Each pixel should be 4 bytes. This is hardcoded here but for clean external acces
+ * the BytesPerPixel function should be used by other functions
+ *
+ * @warning Pixels does not own the data ! The owner of the data should
+ *          call Pixels::CleanUp() then destroy the data.
  */
 class Pixels
 {
@@ -35,38 +39,42 @@ public:
     virtual ~Pixels();
 
     /**
-     * @brief Create the array
+     * @brief Set the memory buffer info
      *
-     * @param numberOfPixels the number of pixels in this object
+     * @param stripData the buffer
+     * @param dataLen the length of the buffer
+     * @param stripLen the number of LEDs
+     * @return true if correct data was provided
      */
-    bool Create(uint16_t numberOfPixels);
+    bool Set(uint8_t *stripData, uint16_t dataLen, uint16_t stripLen);
 
     /**
-     * @brief Destroy the array
+     * @brief Remove the info about the memory buffer
      */
-    void Destroy(void);
+    void CleanUp(void);
 
     /**
-     * @brief Return the number of pixels
+     * @brief Return the memory buffer
      */
-    uint16_t Length(void);
+    uint8_t* Data(void) { return data; }
 
     /**
-     * @brief Return a pointer to the allocated memory
+     * @brief Return the number of pixels for current memory buffer
      */
-    uint8_t* Data(void);
+    uint16_t StripLength(void) { return stripLength; }
 
     /**
-     * @brief Return the number of bytes per pixel
+     * @brief Return the number of bytes allocated per pixel
      */
-    uint8_t BytesPerPixel(void);
+    uint8_t BytesPerPixel(void) { return bytesPerPixel; }
 
     /**
      * @brief Set the color from a 32-bit WRGB value
      *
-     * MSB is White, followed by R, G and B
+     * @param idx the index of the the pixel
+     * @param wrgb MSB is White, followed by R, G and B
      */
-    void SetColor(uint16_t idx, uint32_t components);
+    void SetColor(uint16_t idx, uint32_t wrgb);
 
     /**
      * @brief Set the color from individual components, white = 0
@@ -79,8 +87,10 @@ public:
     void SetColor(uint16_t idx, uint8_t w, uint8_t r, uint8_t g, uint8_t b);
 
 protected:
-    uint16_t length; // number of pixels
-    uint8_t *data; // the pixels
+    uint8_t *data; // the memory buffer for pixels
+    uint16_t stripLength; // the number of pixels
+
+    const uint8_t bytesPerPixel = 4;
 };
 
 #endif

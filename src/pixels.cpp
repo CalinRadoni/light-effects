@@ -21,83 +21,73 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <new>
 
-// do not change this value ! There are no checks is code !
-const uint8_t bytesPerPixel = 4;
-
 Pixels::Pixels(void)
 {
-    length = 0;
     data = nullptr;
+    stripLength = 0;
 }
 
 Pixels::~Pixels(void)
 {
-    Destroy();
+    //
 }
 
-bool Pixels::Create(uint16_t numberOfPixels)
+bool Pixels::Set(uint8_t *stripData, uint16_t dataLen, uint16_t stripLen)
 {
-    Destroy();
+    data = stripData;
+    stripLength = stripLen;
 
-    if (numberOfPixels == 0) return true;
-
-    uint32_t reqLen = length * bytesPerPixel;
-    data = new (std::nothrow) uint8_t[reqLen];
     if (data == nullptr) {
+        CleanUp();
         return false;
     }
 
-    length = numberOfPixels;
+    if (stripLength == 0) {
+        CleanUp();
+        return false;
+    }
+
+    if (dataLen != stripLength * bytesPerPixel) {
+        CleanUp();
+        return false;
+    }
+
     return true;
 }
 
-void Pixels::Destroy(void)
+void Pixels::CleanUp(void)
 {
-    if (data != nullptr) {
-        delete[] data;
-        data = nullptr;
-    }
-    length = 0;
+    data = nullptr;
+    stripLength = 0;
 }
 
-uint16_t Pixels::Length(void)
+void Pixels::SetColor(uint16_t idx, uint32_t wrgb)
 {
-    return length;
-}
-
-uint8_t* Pixels::Data(void)
-{
-    return data;
-}
-
-uint8_t Pixels::BytesPerPixel(void)
-{
-    return bytesPerPixel;
-}
-
-void Pixels::SetColor(uint16_t idx, uint32_t components)
-{
-    if (idx >= length) return;
+    if (idx >= stripLength) return;
 
     uint8_t *pixel = data;
     pixel += idx * bytesPerPixel;
-    pixel += bytesPerPixel - 1;
+    pixel += bytesPerPixel;
 
-    *pixel = (uint8_t)(components & 0xFF);
     --pixel;
-    components = components >> 8;
-    *pixel = (uint8_t)(components & 0xFF);
+    *pixel = (uint8_t)(wrgb & 0xFF);
+
+    wrgb = wrgb >> 8;
     --pixel;
-    components = components >> 8;
-    *pixel = (uint8_t)(components & 0xFF);
+    *pixel = (uint8_t)(wrgb & 0xFF);
+
+    wrgb = wrgb >> 8;
     --pixel;
-    components = components >> 8;
-    *pixel = (uint8_t)(components & 0xFF);
+    *pixel = (uint8_t)(wrgb & 0xFF);
+
+    wrgb = wrgb >> 8;
+    --pixel;
+    *pixel = (uint8_t)(wrgb & 0xFF);
 }
 
 void Pixels::SetColor(uint16_t idx, uint8_t r, uint8_t g, uint8_t b)
 {
-    if (idx >= length) return;
+    if (idx >= stripLength) return;
 
     uint8_t *pixel = data;
     pixel += idx * bytesPerPixel;
@@ -110,7 +100,7 @@ void Pixels::SetColor(uint16_t idx, uint8_t r, uint8_t g, uint8_t b)
 
 void Pixels::SetColor(uint16_t idx, uint8_t w, uint8_t r, uint8_t g, uint8_t b)
 {
-    if (idx >= length) return;
+    if (idx >= stripLength) return;
 
     uint8_t *pixel = data;
     pixel += idx * bytesPerPixel;
