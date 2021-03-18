@@ -80,6 +80,8 @@ public:
     // functions to output values
 
     void ToBytePtr(uint8_t *val);
+
+    uint32_t Get(void);
 };
 
 #endif
