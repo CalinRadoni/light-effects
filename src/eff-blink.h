@@ -39,11 +39,8 @@ public:
     bool Step(uint32_t timeMS) {
         cycleCompleted = false;
         if (stepIdx == 0) {
-            elapsedTime = 0;
+            elapsedTime = delay1;
             lastCallTime = timeMS;
-            Fill(color1);
-            ++stepIdx;
-            return true;
         }
 
         elapsedTime += timeMS - lastCallTime;

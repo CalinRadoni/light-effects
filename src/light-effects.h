@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef light_effects_H
 #define light_effects_H
 
-#include "pixels.h"
 #include "eff-static.h"
 #include "eff-blink.h"
 #include "eff-rainbow.h"

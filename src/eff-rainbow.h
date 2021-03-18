@@ -58,19 +58,18 @@ public:
         color.s = saturation;
         color.v = value;
         color.h = stepIdx % rainbowMod;
-        uint16_t len = pixels->StripLength();
-        uint8_t *data = pixels->Data();
-        while (len > 0) {
+
+        uint8_t *pixel = data;
+        for (uint16_t i = 0; i < stripLen; ++i) {
             if (rainbow_ce) color.ToRGB_raw_ce(rgb);
             else            color.ToRGB_raw(rgb);
-            *data = rgb.w; ++data;
-            *data = rgb.r; ++data;
-            *data = rgb.g; ++data;
-            *data = rgb.b; ++data;
+            *pixel = rgb.w; ++pixel;
+            *pixel = rgb.r; ++pixel;
+            *pixel = rgb.g; ++pixel;
+            *pixel = rgb.b; ++pixel;
 
             if (increaseHue) color.h = (color.h + pixelStep) % rainbowMod;
             else             color.h = (color.h + rainbowMod - pixelStep) % rainbowMod;
-            --len;
         }
 
         ++stepIdx;
