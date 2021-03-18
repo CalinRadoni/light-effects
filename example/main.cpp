@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <fstream>
 
@@ -6,7 +7,72 @@
 #include "../src/color-hsv.h"
 #include "../src/color-gamma.h"
 
-int main()
+#include "../src/light-effects.h"
+
+const uint16_t virtualLEDcount = 32;
+uint8_t buffer[virtualLEDcount * 4] = {0};
+
+const uint32_t hexRed   = 0x00200000;
+const uint32_t hexGreen = 0x00002000;
+const uint32_t hexBlue  = 0x00000020;
+
+void PrintVirtualLEDs(void)
+{
+    uint16_t i =0;
+
+    std::cout << std::setbase(16);
+    while (i < virtualLEDcount) {
+        uint32_t val = (buffer[4 * i] << 24) | (buffer[4 * i + 1] << 16) | (buffer[4 * i + 2] << 8) | buffer[4 * i + 3];
+        std::cout << std::setfill('0') << std::setw(8) << val;
+        ++i;
+        if (i % 8) std::cout << " ";
+        else std::cout << std::endl;
+    }
+    std::cout << std::setbase(0);
+}
+
+void BuildBlinkAnimation(void)
+{
+    Pixels pixels;
+    BlinkEffect effect;
+    uint32_t delay = 1;
+    uint32_t idx = 0;
+
+    pixels.Set(buffer, virtualLEDcount * 4, virtualLEDcount);
+
+    effect.Initialize(&pixels);
+    effect.color1.Set(hexRed);
+    effect.delay1 = delay;
+    effect.color2.Set(hexBlue);
+    effect.delay2 = delay;
+    while (!effect.CycleCompleted()) {
+        if (effect.Step(++delay)) {
+            std::cout << "Step " << idx++ << std::endl;
+            PrintVirtualLEDs();
+        }
+    }
+}
+
+void BuildRainbowAnimation(void)
+{
+    Pixels pixels;
+    RainbowEffect effect;
+    uint32_t delay = 1;
+    uint32_t idx = 0;
+
+    pixels.Set(buffer, virtualLEDcount * 4, virtualLEDcount);
+
+    effect.Initialize(&pixels);
+    effect.delay = delay;
+    while (idx < 4) {
+        if (effect.Step(++delay)) {
+            std::cout << "Step " << idx++ << std::endl;
+            PrintVirtualLEDs();
+        }
+    }
+}
+
+void BuildRainbowFiles(void)
 {
     ColorWRGB rgb;
     ColorHSV color;
@@ -78,6 +144,13 @@ int main()
         file << ccc[i] << std::endl;
     }
     file.close();
+}
+
+int main()
+{
+    // BuildRainbowFiles();
+    // BuildBlinkAnimation();
+    BuildRainbowAnimation();
 
     return 0;
 }

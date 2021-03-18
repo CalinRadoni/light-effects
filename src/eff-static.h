@@ -17,22 +17,44 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef light_effects_H
-#define light_effects_H
+#ifndef eff_static_H
+#define eff_static_H
 
-#include "pixels.h"
-#include "eff-static.h"
-#include "eff-blink.h"
-#include "eff-rainbow.h"
+#include "light-effect.h"
 
-class LightEffects
+/**
+ * @brief Static color
+ *
+ * Fill all the pixels with `color`.
+ * The fill is performed in the first call then only if the color changes.
+ */
+class StaticEffect : public LightEffect
 {
 public:
-    LightEffects(void);
-    virtual ~LightEffects();
+    StaticEffect(void) {}
+    virtual ~StaticEffect() {}
+
+    ColorWRGB color;
+
+    bool Step(uint32_t timeMS) {
+        cycleCompleted = true;
+        if (stepIdx == 0) {
+            prevColor = color;
+            Fill(prevColor);
+            ++stepIdx;
+            return true;
+        }
+
+        if (color == prevColor)
+            return false;
+
+        prevColor = color;
+        Fill(prevColor);
+        return true;
+    }
 
 protected:
-
+    ColorWRGB prevColor;
 };
 
 #endif
