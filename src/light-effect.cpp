@@ -21,7 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 LightEffect::LightEffect(void)
 {
-    pixels = nullptr;
+    data = nullptr;
+    stripLen = 0;
     stepIdx = 0;
     cycleCompleted = false;
     lastCallTime = 0;
@@ -33,47 +34,91 @@ LightEffect::~LightEffect(void)
     //
 }
 
+void LightEffect::SetColor(uint16_t idx, uint32_t wrgb)
+{
+    if (idx >= stripLen) return;
+
+    uint8_t *pixel = data;
+    pixel += idx * bytesPerPixel;
+    pixel += bytesPerPixel;
+
+    --pixel;
+    *pixel = (uint8_t)(wrgb & 0xFF);
+
+    wrgb = wrgb >> 8;
+    --pixel;
+    *pixel = (uint8_t)(wrgb & 0xFF);
+
+    wrgb = wrgb >> 8;
+    --pixel;
+    *pixel = (uint8_t)(wrgb & 0xFF);
+
+    wrgb = wrgb >> 8;
+    --pixel;
+    *pixel = (uint8_t)(wrgb & 0xFF);
+}
+
+void LightEffect::SetColor(uint16_t idx, uint8_t r, uint8_t g, uint8_t b)
+{
+    if (idx >= stripLen) return;
+
+    uint8_t *pixel = data;
+    pixel += idx * bytesPerPixel;
+
+    *pixel = 0; ++pixel;
+    *pixel = r; ++pixel;
+    *pixel = g; ++pixel;
+    *pixel = b;
+}
+
+void LightEffect::SetColor(uint16_t idx, uint8_t w, uint8_t r, uint8_t g, uint8_t b)
+{
+    if (idx >= stripLen) return;
+
+    uint8_t *pixel = data;
+    pixel += idx * bytesPerPixel;
+
+    *pixel = w; ++pixel;
+    *pixel = r; ++pixel;
+    *pixel = g; ++pixel;
+    *pixel = b;
+}
+
 void LightEffect::Fill(uint8_t r, uint8_t g, uint8_t b)
 {
-    if (pixels == nullptr) return;
+    if (data == nullptr) return;
 
-    uint16_t len = pixels->StripLength();
-    uint8_t *data = pixels->Data();
-    while (len > 0) {
-        *data = 0; ++data;
-        *data = r; ++data;
-        *data = g; ++data;
-        *data = b; ++data;
-        --len;
+    uint8_t *pixel = data;
+    for (uint16_t i = 0; i < stripLen; ++i) {
+        *pixel = 0; ++pixel;
+        *pixel = r; ++pixel;
+        *pixel = g; ++pixel;
+        *pixel = b; ++pixel;
     }
 }
 
 void LightEffect::Fill(uint8_t w, uint8_t r, uint8_t g, uint8_t b)
 {
-    if (pixels == nullptr) return;
+    if (data == nullptr) return;
 
-    uint16_t len = pixels->StripLength();
-    uint8_t *data = pixels->Data();
-    while (len > 0) {
-        *data = w; ++data;
-        *data = r; ++data;
-        *data = g; ++data;
-        *data = b; ++data;
-        --len;
+    uint8_t *pixel = data;
+    for (uint16_t i = 0; i < stripLen; ++i) {
+        *pixel = w; ++pixel;
+        *pixel = r; ++pixel;
+        *pixel = g; ++pixel;
+        *pixel = b; ++pixel;
     }
 }
 
 void LightEffect::Fill(ColorWRGB &rgb)
 {
-    if (pixels == nullptr) return;
+    if (data == nullptr) return;
 
-    uint16_t len = pixels->StripLength();
-    uint8_t *data = pixels->Data();
-    while (len > 0) {
-        *data = rgb.w; ++data;
-        *data = rgb.r; ++data;
-        *data = rgb.g; ++data;
-        *data = rgb.b; ++data;
-        --len;
+    uint8_t *pixel = data;
+    for (uint16_t i = 0; i < stripLen; ++i) {
+        *pixel = rgb.w; ++pixel;
+        *pixel = rgb.r; ++pixel;
+        *pixel = rgb.g; ++pixel;
+        *pixel = rgb.b; ++pixel;
     }
 }

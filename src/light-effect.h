@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef light_effect_H
 #define light_effect_H
 
-#include "pixels.h"
 #include "color-wrgb.h"
 
 class LightEffect
@@ -32,13 +31,17 @@ public:
     /**
      * @brief Initialize the effect.
      *
+     * @param buffer is the memory buffer
+     * @param buffLen is the size in bytes of the memory buffer
+     *
      * @return true on success
      */
-    virtual bool Initialize(Pixels *data) {
-        pixels = data;
+    virtual bool Initialize(uint8_t *buffer, uint16_t buffLen) {
+        data = buffer;
+        stripLen = buffLen / bytesPerPixel;
         stepIdx = 0;
         cycleCompleted = false;
-        return pixels != nullptr;
+        return data != nullptr;
     }
 
     /**
@@ -52,7 +55,7 @@ public:
      * @return true if a new step was computed
      */
     virtual bool Step(uint32_t timeMS) {
-        if (pixels == nullptr) return false;
+        if (data == nullptr) return false;
         if (timeMS > 1) ++stepIdx;
         return true;
     }
@@ -64,14 +67,39 @@ public:
      */
     bool CycleCompleted(void) { return cycleCompleted; }
 
-    virtual void CleanUp(void) { pixels = nullptr; }
+    /**
+     * @brief Clean up
+     */
+    virtual void CleanUp(void) {
+        data = nullptr;
+        stripLen = 0;
+    }
 
 protected:
-    Pixels *pixels;
+    uint8_t *data;
+    uint16_t stripLen;
+
+    const uint8_t bytesPerPixel = 4;
+
     uint32_t stepIdx;
     bool cycleCompleted;
     uint32_t lastCallTime;
     uint32_t elapsedTime;
+
+    /**
+     * @brief Set the color from a 32-bit WRGB value
+     */
+    void SetColor(uint16_t idx, uint32_t wrgb);
+
+    /**
+     * @brief Set the color from individual components, white = 0
+     */
+    void SetColor(uint16_t idx, uint8_t r, uint8_t g, uint8_t b);
+
+    /**
+     * @brief Set the color from individual components
+     */
+    void SetColor(uint16_t idx, uint8_t w, uint8_t r, uint8_t g, uint8_t b);
 
     void Fill(uint8_t r, uint8_t g, uint8_t b);
     void Fill(uint8_t w, uint8_t r, uint8_t g, uint8_t b);

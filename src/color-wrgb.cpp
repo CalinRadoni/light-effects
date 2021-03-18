@@ -53,8 +53,7 @@ void ColorWRGB::Set(uint8_t *val) {
     w = *ptr++; r = *ptr++; g = *ptr++; b = *ptr;
 }
 
-void ColorWRGB::Set(ColorHSV &hsv)
-{
+void ColorWRGB::Set(ColorHSV &hsv) {
     hsv.ToRGB_raw(*this);
 }
 
@@ -62,4 +61,12 @@ void ColorWRGB::ToBytePtr(uint8_t *val) {
     if (val == nullptr) return;
     uint8_t *ptr = val;
     *ptr++ = w; *ptr++ = r; *ptr++ = g; *ptr = b;
+}
+
+uint32_t ColorWRGB::Get(void) {
+    uint32_t val = w;
+    val = val << 8; val |= r;
+    val = val << 8; val |= g;
+    val = val << 8; val |= b;
+    return val;
 }
