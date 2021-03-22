@@ -23,10 +23,13 @@ LightEffect::LightEffect(void)
 {
     data = nullptr;
     stripLen = 0;
+    gamma = nullptr;
     stepIdx = 0;
     cycleCompleted = false;
     lastCallTime = 0;
     elapsedTime = 0;
+
+    applyGammaCorrection = false;
 }
 
 LightEffect::~LightEffect(void)
@@ -40,22 +43,27 @@ void LightEffect::SetColor(uint16_t idx, uint32_t wrgb)
 
     uint8_t *pixel = data;
     pixel += idx * bytesPerPixel;
-    pixel += bytesPerPixel;
 
-    --pixel;
-    *pixel = (uint8_t)(wrgb & 0xFF);
+    uint8_t w, r, g, b;
 
-    wrgb = wrgb >> 8;
-    --pixel;
-    *pixel = (uint8_t)(wrgb & 0xFF);
+    b = (uint8_t)(wrgb & 0xFF); wrgb = wrgb >> 8;
+    g = (uint8_t)(wrgb & 0xFF); wrgb = wrgb >> 8;
+    r = (uint8_t)(wrgb & 0xFF); wrgb = wrgb >> 8;
+    w = (uint8_t)(wrgb & 0xFF);
 
-    wrgb = wrgb >> 8;
-    --pixel;
-    *pixel = (uint8_t)(wrgb & 0xFF);
-
-    wrgb = wrgb >> 8;
-    --pixel;
-    *pixel = (uint8_t)(wrgb & 0xFF);
+    if (applyGammaCorrection && (gamma != nullptr)) {
+        uint8_t *gt = gamma->GetTable();
+        *pixel = gt[w]; ++pixel;
+        *pixel = gt[r]; ++pixel;
+        *pixel = gt[g]; ++pixel;
+        *pixel = gt[b];
+    }
+    else {
+        *pixel = w; ++pixel;
+        *pixel = r; ++pixel;
+        *pixel = g; ++pixel;
+        *pixel = b;
+    }
 }
 
 void LightEffect::SetColor(uint16_t idx, uint8_t r, uint8_t g, uint8_t b)
@@ -65,10 +73,19 @@ void LightEffect::SetColor(uint16_t idx, uint8_t r, uint8_t g, uint8_t b)
     uint8_t *pixel = data;
     pixel += idx * bytesPerPixel;
 
-    *pixel = 0; ++pixel;
-    *pixel = r; ++pixel;
-    *pixel = g; ++pixel;
-    *pixel = b;
+    if (applyGammaCorrection && (gamma != nullptr)) {
+        uint8_t *gt = gamma->GetTable();
+        *pixel = 0; ++pixel;
+        *pixel = gt[r]; ++pixel;
+        *pixel = gt[g]; ++pixel;
+        *pixel = gt[b];
+    }
+    else {
+        *pixel = 0; ++pixel;
+        *pixel = r; ++pixel;
+        *pixel = g; ++pixel;
+        *pixel = b;
+    }
 }
 
 void LightEffect::SetColor(uint16_t idx, uint8_t w, uint8_t r, uint8_t g, uint8_t b)
@@ -78,22 +95,34 @@ void LightEffect::SetColor(uint16_t idx, uint8_t w, uint8_t r, uint8_t g, uint8_
     uint8_t *pixel = data;
     pixel += idx * bytesPerPixel;
 
-    *pixel = w; ++pixel;
-    *pixel = r; ++pixel;
-    *pixel = g; ++pixel;
-    *pixel = b;
+    if (applyGammaCorrection && (gamma != nullptr)) {
+        uint8_t *gt = gamma->GetTable();
+        *pixel = gt[w]; ++pixel;
+        *pixel = gt[r]; ++pixel;
+        *pixel = gt[g]; ++pixel;
+        *pixel = gt[b];
+    }
+    else {
+        *pixel = w; ++pixel;
+        *pixel = r; ++pixel;
+        *pixel = g; ++pixel;
+        *pixel = b;
+    }
 }
 
 void LightEffect::Fill(uint8_t r, uint8_t g, uint8_t b)
 {
     if (data == nullptr) return;
 
+    ColorWRGB rgb(r, g, b);
+    if (applyGammaCorrection && (gamma != nullptr)) gamma->Apply(rgb);
+
     uint8_t *pixel = data;
     for (uint16_t i = 0; i < stripLen; ++i) {
         *pixel = 0; ++pixel;
-        *pixel = r; ++pixel;
-        *pixel = g; ++pixel;
-        *pixel = b; ++pixel;
+        *pixel = rgb.r; ++pixel;
+        *pixel = rgb.g; ++pixel;
+        *pixel = rgb.b; ++pixel;
     }
 }
 
@@ -101,18 +130,24 @@ void LightEffect::Fill(uint8_t w, uint8_t r, uint8_t g, uint8_t b)
 {
     if (data == nullptr) return;
 
+    ColorWRGB rgb(w, r, g, b);
+    if (applyGammaCorrection && (gamma != nullptr)) gamma->Apply(rgb);
+
     uint8_t *pixel = data;
     for (uint16_t i = 0; i < stripLen; ++i) {
-        *pixel = w; ++pixel;
-        *pixel = r; ++pixel;
-        *pixel = g; ++pixel;
-        *pixel = b; ++pixel;
+        *pixel = rgb.w; ++pixel;
+        *pixel = rgb.r; ++pixel;
+        *pixel = rgb.g; ++pixel;
+        *pixel = rgb.b; ++pixel;
     }
 }
 
-void LightEffect::Fill(ColorWRGB &rgb)
+void LightEffect::Fill(ColorWRGB &rgbIn)
 {
     if (data == nullptr) return;
+
+    ColorWRGB rgb = rgbIn;
+    if (applyGammaCorrection && (gamma != nullptr)) gamma->Apply(rgb);
 
     uint8_t *pixel = data;
     for (uint16_t i = 0; i < stripLen; ++i) {

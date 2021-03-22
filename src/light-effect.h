@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define light_effect_H
 
 #include "color-wrgb.h"
+#include "color-gamma.h"
 
 class LightEffect
 {
@@ -33,16 +34,20 @@ public:
      *
      * @param buffer is the memory buffer
      * @param buffLen is the size in bytes of the memory buffer
+     * @param gammaCorrection for gamma correction, nullptr is OK
      *
      * @return true on success
      */
-    virtual bool Initialize(uint8_t *buffer, uint16_t buffLen) {
+    virtual bool Initialize(uint8_t *buffer, uint16_t buffLen, Gamma *gammaCorrection) {
         data = buffer;
         stripLen = buffLen / bytesPerPixel;
+        gamma = gammaCorrection;
         stepIdx = 0;
         cycleCompleted = false;
         return data != nullptr;
     }
+
+    bool applyGammaCorrection; ///< Switch to control the application of gamma correction
 
     /**
      * @brief Compute a new step.
@@ -78,6 +83,7 @@ public:
 protected:
     uint8_t *data;
     uint16_t stripLen;
+    Gamma *gamma;
 
     const uint8_t bytesPerPixel = 4;
 

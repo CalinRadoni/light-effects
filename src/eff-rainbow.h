@@ -63,6 +63,9 @@ public:
         for (uint16_t i = 0; i < stripLen; ++i) {
             if (rainbow_ce) color.ToRGB_raw_ce(rgb);
             else            color.ToRGB_raw(rgb);
+
+            if (applyGammaCorrection && (gamma != nullptr)) gamma->Apply(rgb);
+
             *pixel = rgb.w; ++pixel;
             *pixel = rgb.r; ++pixel;
             *pixel = rgb.g; ++pixel;

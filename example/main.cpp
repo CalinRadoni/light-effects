@@ -13,6 +13,8 @@ const uint16_t virtualLEDcount = 32;
 const uint16_t bufferLen = virtualLEDcount * 4;
 uint8_t buffer[bufferLen] = {0};
 
+Gamma gammaCorrection;
+
 const uint32_t hexRed   = 0x00200000;
 const uint32_t hexGreen = 0x00002000;
 const uint32_t hexBlue  = 0x00000020;
@@ -41,7 +43,8 @@ void BuildBlinkAnimation(void)
     uint32_t delay = 1;
     uint32_t idx = 0;
 
-    effect.Initialize(buffer, bufferLen);
+    effect.applyGammaCorrection = true;
+    effect.Initialize(buffer, bufferLen, &gammaCorrection);
     effect.color1.Set(hexRed);  effect.delay1 = delay;
     effect.color2.Set(hexBlue); effect.delay2 = delay;
     while (!effect.CycleCompleted()) {
@@ -58,7 +61,8 @@ void BuildRainbowAnimation(void)
     uint32_t delay = 1;
     uint32_t idx = 0;
 
-    effect.Initialize(buffer, bufferLen);
+    effect.applyGammaCorrection = true;
+    effect.Initialize(buffer, bufferLen, &gammaCorrection);
     effect.delay = delay;
     while (idx < 4) {
         if (effect.Step(delay++)) {
