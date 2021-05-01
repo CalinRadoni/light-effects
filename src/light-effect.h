@@ -21,7 +21,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define light_effect_H
 
 #include "color-wrgb.h"
+#include "color-hsv.h"
 #include "color-gamma.h"
+
+enum class Effect : uint8_t {
+    delay = 0,
+    color = 1,
+    blink = 2,
+    rainbow = 3
+};
 
 class LightEffect
 {
@@ -30,67 +38,58 @@ public:
     virtual ~LightEffect();
 
     /**
-     * @brief Initialize the effect.
+     * @brief Set the Data Buffer object
      *
      * @param buffer is the memory buffer
      * @param buffLen is the size in bytes of the memory buffer
-     * @param gammaCorrection for gamma correction, nullptr is OK
-     *
-     * @return true on success
      */
-    virtual bool Initialize(uint8_t *buffer, uint16_t buffLen, Gamma *gammaCorrection) {
-        data = buffer;
-        stripLen = buffLen / bytesPerPixel;
-        gamma = gammaCorrection;
-        stepIdx = 0;
-        cycleCompleted = false;
-        return data != nullptr;
-    }
+    void SetDataBuffer(uint8_t *buffer, uint16_t buffLen);
 
-    bool applyGammaCorrection; ///< Switch to control the application of gamma correction
+    /**
+     * @brief Initialize the effect.
+     */
+    void Initialize(Effect);
+
+    ColorWRGB color0, color1, color2;
+    uint32_t delay0{0}, delay1{0}, delay2{0};
+    ColorHSV hsvBase;
+    bool hueInc{true};
+    uint8_t hueStep{1};
+    bool constantEnergy{false};
+    bool useGammaCorrection{false};
+    bool stopWhenCycleCompleted{false};
+
+    bool IsRunning(void);
+
+    void Stop(void);
+
+    void RebuildGammaTable(float factor);
 
     /**
      * @brief Compute a new step.
      *
      * Computes a new step if enough miliseconds have passed.
      *
-     * @note It should keeps track of elapsed time to allow resynchronization if multiple `Pixel` objects are used.
-     *       This is why `lastCallTime` and `elapsedTime` are declared.
-     *
      * @return true if a new step was computed
+     * @return false if data buffer was not changed
      */
-    virtual bool Step(uint32_t timeMS) {
-        if (data == nullptr) return false;
-        if (timeMS > 1) ++stepIdx;
-        return true;
-    }
-
-    /**
-     * @brief Check if a cycle is completed
-     *
-     * Returns true if the last computed step was the last step of a cycle.
-     */
-    bool CycleCompleted(void) { return cycleCompleted; }
-
-    /**
-     * @brief Clean up
-     */
-    virtual void CleanUp(void) {
-        data = nullptr;
-        stripLen = 0;
-    }
+    bool Step(uint32_t timeMS);
 
 protected:
-    uint8_t *data;
-    uint16_t stripLen;
-    Gamma *gamma;
+    uint8_t *data{nullptr};
+    uint16_t stripLen{0};
+    Effect effect{Effect::delay};
+    Gamma gamma;
 
     const uint8_t bytesPerPixel = 4;
 
-    uint32_t stepIdx;
-    bool cycleCompleted;
-    uint32_t lastCallTime;
-    uint32_t elapsedTime;
+    uint32_t stepIdx{0};
+    uint32_t lastCallTime{0};
+    uint32_t elapsedTime{0};
+
+    bool running{false};
+
+    ColorWRGB prevColor;
 
     /**
      * @brief Set the color from a 32-bit WRGB value
@@ -110,6 +109,11 @@ protected:
     void Fill(uint8_t r, uint8_t g, uint8_t b);
     void Fill(uint8_t w, uint8_t r, uint8_t g, uint8_t b);
     void Fill(ColorWRGB&);
+
+    bool StepDelay(uint32_t timeMS);
+    bool StepColor(uint32_t timeMS);
+    bool StepBlink(uint32_t timeMS);
+    bool StepRainbow(uint32_t timeMS);
 };
 
 #endif

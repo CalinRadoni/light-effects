@@ -7,17 +7,17 @@
 #include "../src/color-hsv.h"
 #include "../src/color-gamma.h"
 
-#include "../src/light-effects.h"
+#include "../src/light-effect.h"
 
 const uint16_t virtualLEDcount = 32;
 const uint16_t bufferLen = virtualLEDcount * 4;
 uint8_t buffer[bufferLen] = {0};
 
-Gamma gammaCorrection;
-
 const uint32_t hexRed   = 0x00200000;
 const uint32_t hexGreen = 0x00002000;
 const uint32_t hexBlue  = 0x00000020;
+
+LightEffect effect;
 
 void PrintVirtualLEDs(void)
 {
@@ -39,37 +39,52 @@ void PrintVirtualLEDs(void)
 
 void BuildBlinkAnimation(void)
 {
-    BlinkEffect effect;
-    uint32_t delay = 1;
+    uint32_t elapsedTime = 0;
     uint32_t idx = 0;
 
-    effect.applyGammaCorrection = true;
-    effect.Initialize(buffer, bufferLen, &gammaCorrection);
-    effect.color1.Set(hexRed);  effect.delay1 = delay;
-    effect.color2.Set(hexBlue); effect.delay2 = delay;
-    while (!effect.CycleCompleted()) {
-        if (effect.Step(delay++)) {
-            std::cout << "Step " << idx++ << std::endl;
+    std::cout << "Blink animation" << std::endl;
+    effect.Stop();
+    effect.Initialize(Effect::blink);
+    effect.color0.Set(hexRed);  effect.delay0 = 4;
+    effect.color1.Set(hexBlue); effect.delay1 = 4;
+    effect.useGammaCorrection = true;
+    effect.stopWhenCycleCompleted = true;
+    while (effect.IsRunning()) {
+        if (effect.Step(elapsedTime)) {
+            std::cout << "Time " << elapsedTime << " step " << idx++ << std::endl;
             PrintVirtualLEDs();
         }
+        else {
+            std::cout << "Time " << elapsedTime << std::endl;
+        }
+        ++elapsedTime;
     }
+    std::cout << std::endl;
 }
 
 void BuildRainbowAnimation(void)
 {
-    RainbowEffect effect;
-    uint32_t delay = 1;
+    uint32_t elapsedTime = 0;
     uint32_t idx = 0;
 
-    effect.applyGammaCorrection = true;
-    effect.Initialize(buffer, bufferLen, &gammaCorrection);
-    effect.delay = delay;
+    std::cout << "Rainbow animation" << std::endl;
+    effect.Stop();
+    effect.Initialize(Effect::rainbow);
+    effect.hsvBase.s = 0xFF;
+    effect.hsvBase.v = 0xFF;
+    effect.delay0 = 4;
+    effect.useGammaCorrection = true;
     while (idx < 4) {
-        if (effect.Step(delay++)) {
-            std::cout << "Step " << idx++ << std::endl;
+        if (effect.Step(elapsedTime)) {
+            std::cout << "Time " << elapsedTime << " step " << idx++ << std::endl;
             PrintVirtualLEDs();
         }
+        else {
+            std::cout << "Time " << elapsedTime << std::endl;
+        }
+        ++elapsedTime;
     }
+    std::cout << std::endl;
 }
 
 void BuildRainbowFiles(void)
@@ -148,6 +163,8 @@ void BuildRainbowFiles(void)
 
 int main()
 {
+    effect.SetDataBuffer(buffer, bufferLen);
+
     // BuildRainbowFiles();
     BuildBlinkAnimation();
     BuildRainbowAnimation();

@@ -4,7 +4,6 @@ if(ESP_PLATFORM EQUAL 1)
         "src/color-hsv.cpp"
         "src/color-wrgb.cpp"
         "src/light-effect.cpp"
-        "src/light-effects.cpp"
     )
 
     idf_component_register(
