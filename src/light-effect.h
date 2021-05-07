@@ -110,10 +110,10 @@ protected:
     void Fill(uint8_t w, uint8_t r, uint8_t g, uint8_t b);
     void Fill(ColorWRGB&);
 
-    bool StepDelay(uint32_t timeMS);
-    bool StepColor(uint32_t timeMS);
-    bool StepBlink(uint32_t timeMS);
-    bool StepRainbow(uint32_t timeMS);
+    bool StepDelay(void);
+    bool StepColor(void);
+    bool StepBlink(void);
+    bool StepRainbow(void);
 };
 
 #endif

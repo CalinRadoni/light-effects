@@ -203,16 +203,16 @@ bool LightEffect::Step(uint32_t timeMS)
     lastCallTime = timeMS;
 
     switch (effect) {
-        case Effect::delay:   return StepDelay(timeMS);
-        case Effect::color:   return StepColor(timeMS);
-        case Effect::blink:   return StepBlink(timeMS);
-        case Effect::rainbow: return StepRainbow(timeMS);
+        case Effect::delay:   return StepDelay();
+        case Effect::color:   return StepColor();
+        case Effect::blink:   return StepBlink();
+        case Effect::rainbow: return StepRainbow();
         default: break;
     }
     return false;
 }
 
-bool LightEffect::StepDelay(uint32_t timeMS)
+bool LightEffect::StepDelay(void)
 {
     if (stepIdx == 0) {
         ++stepIdx;
@@ -223,7 +223,7 @@ bool LightEffect::StepDelay(uint32_t timeMS)
     return false;
 }
 
-bool LightEffect::StepColor(uint32_t timeMS)
+bool LightEffect::StepColor(void)
 {
     if (stepIdx == 0) {
         prevColor = color0;
@@ -240,7 +240,7 @@ bool LightEffect::StepColor(uint32_t timeMS)
     return true;
 }
 
-bool LightEffect::StepBlink(uint32_t timeMS)
+bool LightEffect::StepBlink(void)
 {
     if (stepIdx == 0) {
         ++stepIdx;
@@ -273,7 +273,7 @@ bool LightEffect::StepBlink(uint32_t timeMS)
     return false;
 }
 
-bool LightEffect::StepRainbow(uint32_t timeMS)
+bool LightEffect::StepRainbow(void)
 {
     ColorWRGB rgb;
     uint32_t rainbowMod;
