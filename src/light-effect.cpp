@@ -19,23 +19,49 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "light-effect.h"
 
+// -----------------------------------------------------------------------------
+
 LightEffect::LightEffect(void)
 {
-    data = nullptr;
-    stripLen = 0;
-    gamma = nullptr;
-    stepIdx = 0;
-    cycleCompleted = false;
-    lastCallTime = 0;
-    elapsedTime = 0;
-
-    applyGammaCorrection = false;
+    //
 }
 
 LightEffect::~LightEffect(void)
 {
     //
 }
+
+void LightEffect::SetDataBuffer(uint8_t *buffer, uint16_t buffLen)
+{
+    data = buffer;
+    stripLen = buffLen / bytesPerPixel;
+}
+
+void LightEffect::Initialize(Effect eff)
+{
+    effect = eff;
+    stepIdx = 0;
+    nextRunTime = 0;
+    cycleCompleted = false;
+    running = true;
+}
+
+bool LightEffect::IsRunning(void)
+{
+    return running;
+}
+
+void LightEffect::Stop(void)
+{
+    running = false;
+}
+
+void LightEffect::RebuildGammaTable(float factor)
+{
+    gamma.BuildTable(factor);
+}
+
+// -----------------------------------------------------------------------------
 
 void LightEffect::SetColor(uint16_t idx, uint32_t wrgb)
 {
@@ -51,8 +77,8 @@ void LightEffect::SetColor(uint16_t idx, uint32_t wrgb)
     r = (uint8_t)(wrgb & 0xFF); wrgb = wrgb >> 8;
     w = (uint8_t)(wrgb & 0xFF);
 
-    if (applyGammaCorrection && (gamma != nullptr)) {
-        uint8_t *gt = gamma->GetTable();
+    if (useGammaCorrection) {
+        uint8_t *gt = gamma.GetTable();
         *pixel = gt[w]; ++pixel;
         *pixel = gt[r]; ++pixel;
         *pixel = gt[g]; ++pixel;
@@ -73,8 +99,8 @@ void LightEffect::SetColor(uint16_t idx, uint8_t r, uint8_t g, uint8_t b)
     uint8_t *pixel = data;
     pixel += idx * bytesPerPixel;
 
-    if (applyGammaCorrection && (gamma != nullptr)) {
-        uint8_t *gt = gamma->GetTable();
+    if (useGammaCorrection) {
+        uint8_t *gt = gamma.GetTable();
         *pixel = 0; ++pixel;
         *pixel = gt[r]; ++pixel;
         *pixel = gt[g]; ++pixel;
@@ -95,8 +121,8 @@ void LightEffect::SetColor(uint16_t idx, uint8_t w, uint8_t r, uint8_t g, uint8_
     uint8_t *pixel = data;
     pixel += idx * bytesPerPixel;
 
-    if (applyGammaCorrection && (gamma != nullptr)) {
-        uint8_t *gt = gamma->GetTable();
+    if (useGammaCorrection) {
+        uint8_t *gt = gamma.GetTable();
         *pixel = gt[w]; ++pixel;
         *pixel = gt[r]; ++pixel;
         *pixel = gt[g]; ++pixel;
@@ -110,12 +136,14 @@ void LightEffect::SetColor(uint16_t idx, uint8_t w, uint8_t r, uint8_t g, uint8_
     }
 }
 
+// -----------------------------------------------------------------------------
+
 void LightEffect::Fill(uint8_t r, uint8_t g, uint8_t b)
 {
     if (data == nullptr) return;
 
     ColorWRGB rgb(r, g, b);
-    if (applyGammaCorrection && (gamma != nullptr)) gamma->Apply(rgb);
+    if (useGammaCorrection) gamma.Apply(rgb);
 
     uint8_t *pixel = data;
     for (uint16_t i = 0; i < stripLen; ++i) {
@@ -131,7 +159,7 @@ void LightEffect::Fill(uint8_t w, uint8_t r, uint8_t g, uint8_t b)
     if (data == nullptr) return;
 
     ColorWRGB rgb(w, r, g, b);
-    if (applyGammaCorrection && (gamma != nullptr)) gamma->Apply(rgb);
+    if (useGammaCorrection) gamma.Apply(rgb);
 
     uint8_t *pixel = data;
     for (uint16_t i = 0; i < stripLen; ++i) {
@@ -147,7 +175,7 @@ void LightEffect::Fill(ColorWRGB &rgbIn)
     if (data == nullptr) return;
 
     ColorWRGB rgb = rgbIn;
-    if (applyGammaCorrection && (gamma != nullptr)) gamma->Apply(rgb);
+    if (useGammaCorrection) gamma.Apply(rgb);
 
     uint8_t *pixel = data;
     for (uint16_t i = 0; i < stripLen; ++i) {
@@ -156,4 +184,113 @@ void LightEffect::Fill(ColorWRGB &rgbIn)
         *pixel = rgb.g; ++pixel;
         *pixel = rgb.b; ++pixel;
     }
+}
+
+// -----------------------------------------------------------------------------
+
+bool LightEffect::Step(uint32_t timeMS)
+{
+    if (data == nullptr) return false;
+
+    if (!running) return false;
+
+    if (timeMS < nextRunTime) return false;
+
+    if (cycleCompleted && stopWhenCycleCompleted) {
+        running = false;
+        return false;
+    }
+
+    if ((nextRunTime == 0) && (stepIdx == 0)) {
+        // this is the first call after initialization, we have to adjust the time
+        nextRunTime = timeMS;
+    }
+
+    switch (effect) {
+        case Effect::delay:   return StepDelay();
+        case Effect::color:   return StepColor();
+        case Effect::blink:   return StepBlink();
+        case Effect::rainbow: return StepRainbow();
+        default: break;
+    }
+    return false;
+}
+
+bool LightEffect::StepDelay(void)
+{
+    if (stepIdx == 0) {
+        ++stepIdx;
+        nextRunTime += delay0;
+        cycleCompleted = true;
+    }
+
+    return false;
+}
+
+bool LightEffect::StepColor(void)
+{
+    ++nextRunTime;
+
+    if (stepIdx == 0) {
+        prevColor = color0;
+        Fill(prevColor);
+        ++stepIdx;
+        return true;
+    }
+
+    if (color0 == prevColor)
+        return false;
+
+    prevColor = color0;
+    Fill(prevColor);
+    return true;
+}
+
+bool LightEffect::StepBlink(void)
+{
+    if (stepIdx & 1) {
+        Fill(color1);
+        nextRunTime += delay1;
+        cycleCompleted = true;
+    }
+    else {
+        Fill(color0);
+        nextRunTime += delay0;
+    }
+    ++stepIdx;
+    return true;
+}
+
+bool LightEffect::StepRainbow(void)
+{
+    ColorWRGB rgb;
+    uint32_t rainbowMod;
+
+    rainbowMod = constantEnergy ? 765 : 1530;
+    hsvBase.h = stepIdx % rainbowMod;
+
+    nextRunTime += delay0;
+
+    uint8_t *pixel = data;
+    for (uint16_t i = 0; i < stripLen; ++i) {
+        if (constantEnergy) hsvBase.ToRGB_raw_ce(rgb);
+        else                hsvBase.ToRGB_raw(rgb);
+
+        if (useGammaCorrection) gamma.Apply(rgb);
+
+        *pixel = rgb.w; ++pixel;
+        *pixel = rgb.r; ++pixel;
+        *pixel = rgb.g; ++pixel;
+        *pixel = rgb.b; ++pixel;
+
+        if (hueInc) hsvBase.h = (hsvBase.h + hueStep) % rainbowMod;
+        else        hsvBase.h = (rainbowMod + hsvBase.h - hueStep) % rainbowMod;
+    }
+
+    ++stepIdx;
+    if (stepIdx >= rainbowMod) {
+        cycleCompleted = true;
+    }
+
+    return true;
 }
