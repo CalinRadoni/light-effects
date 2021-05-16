@@ -57,9 +57,9 @@ void BuildBlinkAnimation(void)
         else {
             std::cout << "Time " << elapsedTime << std::endl;
         }
-        ++elapsedTime;
+        if (effect.IsRunning()) ++elapsedTime;
     }
-    std::cout << std::endl;
+    std::cout << "Done after " << elapsedTime << std::endl << std::endl;
 }
 
 void BuildRainbowAnimation(void)
@@ -74,17 +74,21 @@ void BuildRainbowAnimation(void)
     effect.hsvBase.v = 0xFF;
     effect.delay0 = 4;
     effect.useGammaCorrection = true;
-    while (idx < 4) {
+    while (effect.IsRunning()) {
         if (effect.Step(elapsedTime)) {
-            std::cout << "Time " << elapsedTime << " step " << idx++ << std::endl;
-            PrintVirtualLEDs();
+            if (idx < 3) {
+                std::cout << "Time " << elapsedTime << " step " << idx++ << std::endl;
+                PrintVirtualLEDs();
+            }
         }
         else {
-            std::cout << "Time " << elapsedTime << std::endl;
+            if (idx < 3) {
+                std::cout << "Time " << elapsedTime << std::endl;
+            }
         }
-        ++elapsedTime;
+        if (effect.IsRunning()) ++elapsedTime;
     }
-    std::cout << std::endl;
+    std::cout << "Done after " << elapsedTime << std::endl << std::endl;
 }
 
 void BuildRainbowFiles(void)

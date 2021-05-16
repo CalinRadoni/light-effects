@@ -84,8 +84,8 @@ protected:
     const uint8_t bytesPerPixel = 4;
 
     uint32_t stepIdx{0};
-    uint32_t lastCallTime{0};
-    uint32_t elapsedTime{0};
+    uint32_t nextRunTime{0};
+    bool cycleCompleted{false};
 
     bool running{false};
 

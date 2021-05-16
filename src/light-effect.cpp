@@ -41,8 +41,8 @@ void LightEffect::Initialize(Effect eff)
 {
     effect = eff;
     stepIdx = 0;
-    lastCallTime = 0;
-    elapsedTime = 0;
+    nextRunTime = 0;
+    cycleCompleted = false;
     running = true;
 }
 
@@ -194,13 +194,17 @@ bool LightEffect::Step(uint32_t timeMS)
 
     if (!running) return false;
 
-    if (stepIdx == 0) {
-        elapsedTime = 0;
+    if (timeMS < nextRunTime) return false;
+
+    if (cycleCompleted && stopWhenCycleCompleted) {
+        running = false;
+        return false;
     }
-    else {
-        elapsedTime += timeMS - lastCallTime;
+
+    if ((nextRunTime == 0) && (stepIdx == 0)) {
+        // this is the first call after initialization, we have to adjust the time
+        nextRunTime = timeMS;
     }
-    lastCallTime = timeMS;
 
     switch (effect) {
         case Effect::delay:   return StepDelay();
@@ -216,15 +220,17 @@ bool LightEffect::StepDelay(void)
 {
     if (stepIdx == 0) {
         ++stepIdx;
+        nextRunTime += delay0;
+        cycleCompleted = true;
     }
-    if (elapsedTime >= delay0) {
-        running = false;
-    }
+
     return false;
 }
 
 bool LightEffect::StepColor(void)
 {
+    ++nextRunTime;
+
     if (stepIdx == 0) {
         prevColor = color0;
         Fill(prevColor);
@@ -242,35 +248,17 @@ bool LightEffect::StepColor(void)
 
 bool LightEffect::StepBlink(void)
 {
-    if (stepIdx == 0) {
-        ++stepIdx;
-        Fill(color0);
-        return true;
-    }
-
     if (stepIdx & 1) {
-        if (elapsedTime >= delay0) {
-            elapsedTime -= delay0;
-            ++stepIdx;
-            Fill(color1);
-            return true;
-        }
+        Fill(color1);
+        nextRunTime += delay1;
+        cycleCompleted = true;
     }
     else {
-        if (elapsedTime >= delay1) {
-            elapsedTime -= delay1;
-            if (stopWhenCycleCompleted) {
-                running = false;
-                return false;
-            }
-            else {
-                ++stepIdx;
-                Fill(color0);
-                return true;
-            }
-        }
+        Fill(color0);
+        nextRunTime += delay0;
     }
-    return false;
+    ++stepIdx;
+    return true;
 }
 
 bool LightEffect::StepRainbow(void)
@@ -281,11 +269,7 @@ bool LightEffect::StepRainbow(void)
     rainbowMod = constantEnergy ? 765 : 1530;
     hsvBase.h = stepIdx % rainbowMod;
 
-    if (stepIdx > 0) {
-        if (elapsedTime < delay0)
-            return false;
-        elapsedTime -= delay0;
-    }
+    nextRunTime += delay0;
 
     uint8_t *pixel = data;
     for (uint16_t i = 0; i < stripLen; ++i) {
@@ -305,8 +289,7 @@ bool LightEffect::StepRainbow(void)
 
     ++stepIdx;
     if (stepIdx >= rainbowMod) {
-        if (stopWhenCycleCompleted)
-            running = false;
+        cycleCompleted = true;
     }
 
     return true;
